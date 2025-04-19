@@ -36,8 +36,8 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64, linux/arm64  # 目标平台
           tags: |
-            dnsmgr/my-image:${{ github.sha }}
-            dnsmgr/my-image:latest
+            surepi942/dnsmgr-web:${{ github.sha }}
+            surepi942/dnsmgr-web:latest
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
