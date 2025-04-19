@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Multi-Arch Docker Build
 
 on:
   push:
@@ -10,18 +10,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. 初始化 Docker Buildx 并创建多平台构建器
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker-container  # 使用容器驱动支持多平台
+          install: true
+
+      # 2. 安装 QEMU 模拟器（支持 ARM/AMD 跨平台构建）
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # 3. 登录 Docker Hub（或其他仓库）
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }} # Docker Hub 用户名
-          password: ${{ secrets.DOCKERHUB_TOKEN }}  # Docker Hub 密码
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push
+      # 4. 构建并推送多平台镜像
+      - name: Build and Push Multi-Arch Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile
-          tags: your-dockerhub-username/my-image:${{ github.sha }}
+          platforms: linux/amd64, linux/arm64  # 目标平台
+          tags: |
+            dnsmgr/my-image:${{ github.sha }}
+            dnsmgr/my-image:latest
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false  # 若使用私有仓库可禁用（避免兼容性问题）
