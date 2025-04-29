@@ -1,52 +1,52 @@
 # 基础镜像
-ARG ALPINE_VERSION=3.18
-FROM alpine:${ALPINE_VERSION}
+FROM debian:bookworm
 
 # 工作目录
 WORKDIR /app/www
 ENV PATH="/usr/bin:${PATH}"
 # 安装依赖包并清理缓存
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     curl \
     unzip \
     nginx \
-    php80 \
-    php80-ctype \
-    php80-curl \
-    php80-dom \
-    php80-fileinfo \
-    php80-fpm \
-    php80-gd \
-    php80-gettext \
-    php80-intl \
-    php80-iconv \
-    php80-mbstring \
-    php80-mysqli \
-    php80-opcache \
-    php80-openssl \
-    php80-phar \
-    php80-sodium \
-    php80-session \
-    php80-simplexml \
-    php80-tokenizer \
-    php80-xml \
-    php80-xmlreader \
-    php80-xmlwriter \
-    php80-zip \
-    php80-pdo \
-    php80-pdo_mysql \
-    php80-pdo_sqlite \
-    php80-pecl-swoole \
-    php80-ssh2 \
-    php80-ftp \
+    php-fpm \
+    php-common \
+    php-ctype \
+    php-curl \
+    php-dom \
+    php-fileinfo \
+    php-gd \
+    php-gettext \
+    php-intl \
+    php-iconv \
+    php-mbstring \
+    php-mysqli \
+    php-opcache \
+    php-openssl \
+    php-phar \
+    php-sodium \
+    php-session \
+    php-simplexml \
+    php-tokenizer \
+    php-xml \
+    php-xmlreader \
+    php-xmlwriter \
+    php-zip \
+    php-pdo \
+    php-pdo-mysql \
+    php-pdo-sqlite \
+    php-swoole \
+    php-ssh2 \
+    php-ftp \
     supervisor && \
-    rm -rf /var/cache/apk/*
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # 配置 Nginx、PHP-FPM 和 supervisord
 COPY config/nginx.conf /etc/nginx/nginx.conf
-COPY config/fpm-pool.conf /etc/php80/php-fpm.d/www.conf
-COPY config/php.ini /etc/php80/conf.d/custom.ini
+COPY config/fpm-pool.conf /etc/php/8.2/fpm/pool.d/www.conf
+COPY config/php.ini /etc/php/8.2/fpm/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 
