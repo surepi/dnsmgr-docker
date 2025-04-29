@@ -38,6 +38,8 @@ RUN apk add --no-cache \
     php82-pdo_mysql \
     php82-pdo_sqlite \
     php82-pecl-swoole \
+    php82-ssh2 \
+    php82-ftp \
     supervisor && \
     rm -rf /var/cache/apk/*
 
