@@ -7,11 +7,6 @@ WORKDIR /app/www
 RUN apk add --no-cache \
   bash \
   curl \
-  git \
-  unzip \
-  vim \
-  wget \
-  zip \
   nginx \
   php82 \
   php82-ctype \
@@ -46,7 +41,7 @@ RUN apk add --no-cache \
 COPY config/nginx.conf /etc/nginx/nginx.conf
 
 # Configure PHP-FPM
-ENV PHP_INI_DIR=/etc/php82
+ENV PHP_INI_DIR /etc/php82
 COPY config/fpm-pool.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
 COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 
@@ -54,24 +49,12 @@ COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Add application
-RUN mkdir -p /usr/src/www \
-    && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/app.zip \
-    && unzip /usr/src/app.zip -d /usr/src/ \
-    # 确保解压后的文件移动到正确路径（注意星号 * 和斜杠 /）
-    && mv /usr/src/dnsmgr-main/* /usr/src/www/ \
-    && rm -rf /usr/src/app.zip /usr/src/dnsmgr-main
-# Install composer
-RUN wget https://getcomposer.org/installer -O - | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer self-update
+RUN mkdir -p /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && unzip /usr/src/www.zip -d /usr/src/ && mv /usr/src/dnsmgr-main /usr/src/www && rm -f /usr/src/www.zip
 
-RUN composer install -d /usr/src/www \
---no-dev \
---no-interaction \
---optimize-autoloader \
---prefer-dist \
--vvv  # 输出详细日志
-RUN chown -R www-data:www-data /usr/src/www \
-    && chmod -R 755 /usr/src/www
+# Install composer
+RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
+
+RUN composer install -d /usr/src/www --no-dev
 
 RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var/lib/nginx /var/log/nginx
 
@@ -86,7 +69,7 @@ ENTRYPOINT ["sh", "/entrypoint.sh"]
 EXPOSE 80
 
 # Let supervisord start nginx & php-fpm
-CMD ["sh", "-c", "crond && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
+CMD crond && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 
 # Configure a healthcheck to validate that everything is up&running
 HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1/fpm-ping || exit 1
