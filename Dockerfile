@@ -47,19 +47,23 @@ COPY config/fpm-pool.conf /etc/php82/php-fpm.d/www.conf
 COPY config/php.ini /etc/php82/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# 添加应用代码并安装 Composer 依赖
-RUN mkdir -p /usr/src && \
-    wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
-    unzip /usr/src/www.zip -d /usr/src/ && \
-    mv /usr/src/dnsmgr-main /usr/src/www && \
-    rm -f /usr/src/www.zip && \
-    chown -R www:www /usr/src/www && \
-    chmod -R 755 /usr/src/www && \
-    wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && \
-    chmod +x /usr/local/bin/composer && \
-    /usr/bin/php82 /usr/local/bin/composer install -d /usr/src/www --no-dev && \
-    /usr/bin/php82 /usr/local/bin/composer clear-cache
 
+# 下载应用代码
+RUN mkdir -p /usr/src && \
+wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
+unzip /usr/src/www.zip -d /usr/src/ && \
+mv /usr/src/dnsmgr-main /usr/src/www && \
+rm -f /usr/src/www.zip && \
+chown -R www:www /usr/src/www && \
+chmod -R 755 /usr/src/www
+
+# 下载并安装 Composer
+RUN wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && \
+chmod +x /usr/local/bin/composer
+
+# 安装 Composer 依赖
+RUN /usr/bin/php82 /usr/local/bin/composer install -d /usr/src/www --no-dev && \
+/usr/bin/php82 /usr/local/bin/composer clear-cache
 # 创建用户并设置权限
 RUN adduser -D -s /sbin/nologin -g www www && \
     mkdir -p /var/lib/nginx /var/log/nginx && \
