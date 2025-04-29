@@ -52,7 +52,7 @@ COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 RUN mkdir -p /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && unzip /usr/src/www.zip -d /usr/src/ && mv /usr/src/dnsmgr-main /usr/src/www && rm -f /usr/src/www.zip
 
 # Install composer
-RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
+RUN wget https://getcomposer.org/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
 RUN composer install -d /usr/src/www --no-dev
 
