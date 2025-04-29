@@ -61,9 +61,17 @@ RUN mkdir -p /usr/src/www \
     && mv /usr/src/dnsmgr-main/* /usr/src/www/ \
     && rm -rf /usr/src/app.zip /usr/src/dnsmgr-main
 # Install composer
-RUN wget https://getcomposer.org/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
+RUN wget https://getcomposer.org/installer -O - | php -- --install-dir=/usr/local/bin --filename=composer \
+    && composer self-update
 
-RUN composer install -d /usr/src/www --no-dev
+RUN composer install -d /usr/src/www \
+--no-dev \
+--no-interaction \
+--optimize-autoloader \
+--prefer-dist \
+-vvv  # 输出详细日志
+RUN chown -R www-data:www-data /usr/src/www \
+    && chmod -R 755 /usr/src/www
 
 RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var/lib/nginx /var/log/nginx
 
