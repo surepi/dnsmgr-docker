@@ -7,6 +7,11 @@ WORKDIR /app/www
 RUN apk add --no-cache \
   bash \
   curl \
+  git \
+  unzip \
+  vim \
+  wget \
+  zip \
   nginx \
   php82 \
   php82-ctype \
@@ -49,8 +54,12 @@ COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Add application
-RUN mkdir -p /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && unzip /usr/src/www.zip -d /usr/src/ && mv /usr/src/dnsmgr-main /usr/src/www && rm -f /usr/src/www.zip
-
+RUN mkdir -p /usr/src/www \
+    && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/app.zip \
+    && unzip /usr/src/app.zip -d /usr/src/ \
+    # 确保解压后的文件移动到正确路径（注意星号 * 和斜杠 /）
+    && mv /usr/src/dnsmgr-main/* /usr/src/www/ \
+    && rm -rf /usr/src/app.zip /usr/src/dnsmgr-main
 # Install composer
 RUN wget https://getcomposer.org/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
