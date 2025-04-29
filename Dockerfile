@@ -4,7 +4,7 @@ FROM alpine:${ALPINE_VERSION}
 
 # 工作目录
 WORKDIR /app/www
-
+ENV PATH="/usr/bin:${PATH}"
 # 安装依赖包并清理缓存
 RUN apk add --no-cache \
     bash \
@@ -49,7 +49,7 @@ COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # 添加应用代码并安装 Composer 依赖
 RUN mkdir -p /usr/src && \
-    wget -q https://git.814560.xyz/https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
+    wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
     unzip /usr/src/www.zip -d /usr/src/ && \
     mv /usr/src/dnsmgr-main /usr/src/www && \
     rm -f /usr/src/www.zip && \
