@@ -60,11 +60,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 安装php8.2-openssl
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-openssl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# openssl功能已包含在php8.2-common中，无需单独安装
 
 # 安装基本PHP扩展 - 第3组
 RUN apt-get update && apt-get install -y --no-install-recommends \
