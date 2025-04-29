@@ -4,12 +4,18 @@ FROM debian:bookworm
 # 工作目录
 WORKDIR /app/www
 ENV PATH="/usr/bin:${PATH}"
-# 安装依赖包并清理缓存
+# 安装基础系统包
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     curl \
     unzip \
     nginx \
+    supervisor && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装PHP核心和常用扩展
+RUN apt-get update && apt-get install -y --no-install-recommends \
     php-fpm \
     php-common \
     php-ctype \
@@ -36,10 +42,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php-pdo \
     php-pdo-mysql \
     php-pdo-sqlite \
-    php-swoole \
-    php-ssh2 \
-    php-ftp \
-    supervisor && \
+    php-ftp && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装需要额外仓库的PHP扩展
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common && \
+    add-apt-repository -y ppa:ondrej/php && \
+    apt-get update && \
+    apt-get install -y php-ssh2 php-swoole && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
