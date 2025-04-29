@@ -57,8 +57,8 @@ RUN mkdir -p /usr/src && \
     chmod -R 755 /usr/src/www && \
     wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && \
     chmod +x /usr/local/bin/composer && \
-    composer install -d /usr/src/www --no-dev && \
-    composer clear-cache
+    /usr/bin/php82 /usr/local/bin/composer install -d /usr/src/www --no-dev && \
+    /usr/bin/php82 /usr/local/bin/composer clear-cache
 
 # 创建用户并设置权限
 RUN adduser -D -s /sbin/nologin -g www www && \
