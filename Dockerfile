@@ -1,145 +1,75 @@
-# 基础镜像
-FROM debian:bookworm
-
-# 工作目录
+ARG ALPINE_VERSION=3.19
+FROM alpine:${ALPINE_VERSION}
+# Setup document root
 WORKDIR /app/www
-ENV PATH="/usr/bin:${PATH}"
-# 安装基础系统包
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash \
-    curl \
-    unzip \
-    nginx \
-    supervisor && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
 
-# 添加PHP官方仓库
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    apt-transport-https \
-    software-properties-common \
-    gnupg2 && \
-    curl -sSL https://packages.sury.org/php/apt.gpg | apt-key add - && \
-    echo "deb https://packages.sury.org/php/ bookworm main" > /etc/apt/sources.list.d/php.list && \
-    apt-get update && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install packages and remove default server definition
+RUN apk add --no-cache \
+  bash \
+  curl \
+  nginx \
+  php82 \
+  php82-ctype \
+  php82-curl \
+  php82-dom \
+  php82-fileinfo \
+  php82-fpm \
+  php82-gd \
+  php82-gettext \
+  php82-intl \
+  php82-iconv \
+  php82-mbstring \
+  php82-mysqli \
+  php82-opcache \
+  php82-openssl \
+  php82-phar \
+  php82-sodium \
+  php82-session \
+  php82-simplexml \
+  php82-tokenizer \
+  php82-xml \
+  php82-xmlreader \
+  php82-xmlwriter \
+  php82-zip \
+  php82-pdo \
+  php82-pdo_mysql \
+  php82-pdo_sqlite \
+  php82-pecl-swoole \
+  supervisor
 
-# 安装PHP核心
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-cli \
-    php8.2-fpm \
-    php8.2-common && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 安装基本PHP扩展 - 第1组
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-ctype \
-    php8.2-curl \
-    php8.2-dom && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 安装系统级依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 安装php8.2-fileinfo
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-fileinfo && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 安装php8.2-mbstring
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-mbstring && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# openssl功能已包含在php8.2-common中，无需单独安装
-
-# 安装基本PHP扩展 - 第3组
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-phar \
-    php8.2-tokenizer \
-    php8.2-xml && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 安装数据库相关PHP扩展
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-mysqli \
-    php8.2-pdo \
-    php8.2-pdo-mysql \
-    php8.2-pdo-sqlite && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 安装其他PHP扩展
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    php8.2-gd \
-    php8.2-intl \
-    php8.2-sodium \
-    php8.2-zip \
-    php8.2-ftp && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 安装需要额外仓库的PHP扩展
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common && \
-    add-apt-repository -y ppa:ondrej/php && \
-    apt-get update && \
-    apt-get install -y php-ssh2 php-swoole && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 配置 Nginx、PHP-FPM 和 supervisord
+# Configure nginx - http
 COPY config/nginx.conf /etc/nginx/nginx.conf
-COPY config/fpm-pool.conf /etc/php/8.2/fpm/pool.d/www.conf
-COPY config/php.ini /etc/php/8.2/fpm/conf.d/custom.ini
+
+# Configure PHP-FPM
+ENV PHP_INI_DIR /etc/php82
+COPY config/fpm-pool.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
+COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
+
+# Configure supervisord
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Add application
+RUN mkdir -p /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && unzip /usr/src/www.zip -d /usr/src/ && mv /usr/src/dnsmgr-main /usr/src/www && rm -f /usr/src/www.zip
 
-# 下载应用代码
-RUN mkdir -p /usr/src && \
-wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
-unzip /usr/src/www.zip -d /usr/src/ && \
-mv /usr/src/dnsmgr-main /usr/src/www && \
-rm -f /usr/src/www.zip && \
-chown -R www:www /usr/src/www && \
-chmod -R 755 /usr/src/www
+# Install composer
+RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
-# 下载并安装 Composer
-RUN wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && \
-chmod +x /usr/local/bin/composer
+RUN composer install -d /usr/src/www --no-dev
 
-# 安装 Composer 依赖
-RUN /usr/local/bin/composer install -d /usr/src/www --no-dev && \
-/usr/local/bin/composer clear-cache
-# 创建用户并设置权限
-RUN adduser -D -s /sbin/nologin -g www www && \
-    mkdir -p /var/lib/nginx /var/log/nginx && \
-    chown -R www:www /usr/src/www /var/lib/nginx /var/log/nginx
+RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var/lib/nginx /var/log/nginx
 
-# 配置 crontab
-RUN echo "*/15 * * * * cd /app/www && /usr/bin/php80 think opiptask" | crontab -u www - && \
-    echo "*/1 * * * * cd /app/www && /usr/bin/php80 think certtask" | crontab -u www - && \
-    crontab -l -u www
+# crontab
+RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" | crontab -u www -
 
-# 复制 entrypoint 脚本并设置权限
+# copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["sh", "/entrypoint.sh"]
 
-# 暴露端口
+# Expose the port nginx is reachable on
 EXPOSE 80
 
-# 启动命令
-CMD ["sh", "/entrypoint.sh"]
+# Let supervisord start nginx & php-fpm
+CMD crond && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl --silent --fail http://127.0.0.1 || exit 1
+# Configure a healthcheck to validate that everything is up&running
+HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1/fpm-ping || exit 1
