@@ -54,7 +54,7 @@ RUN mkdir -p /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/h
 # Install composer
 RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
-RUN composer install -d /usr/src/www --no-dev
+RUN composer install -d /usr/src/www --no-dev --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp
 
 RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var/lib/nginx /var/log/nginx
 
