@@ -11,42 +11,42 @@ RUN apk add --no-cache \
     curl \
     unzip \
     nginx \
-    php82 \
-    php82-ctype \
-    php82-curl \
-    php82-dom \
-    php82-fileinfo \
-    php82-fpm \
-    php82-gd \
-    php82-gettext \
-    php82-intl \
-    php82-iconv \
-    php82-mbstring \
-    php82-mysqli \
-    php82-opcache \
-    php82-openssl \
-    php82-phar \
-    php82-sodium \
-    php82-session \
-    php82-simplexml \
-    php82-tokenizer \
-    php82-xml \
-    php82-xmlreader \
-    php82-xmlwriter \
-    php82-zip \
-    php82-pdo \
-    php82-pdo_mysql \
-    php82-pdo_sqlite \
-    php82-pecl-swoole \
-    php82-ssh2 \
-    php82-ftp \
+    php83 \
+    php83-ctype \
+    php83-curl \
+    php83-dom \
+    php83-fileinfo \
+    php83-fpm \
+    php83-gd \
+    php83-gettext \
+    php83-intl \
+    php83-iconv \
+    php83-mbstring \
+    php83-mysqli \
+    php83-opcache \
+    php83-openssl \
+    php83-phar \
+    php83-sodium \
+    php83-session \
+    php83-simplexml \
+    php83-tokenizer \
+    php83-xml \
+    php83-xmlreader \
+    php83-xmlwriter \
+    php83-zip \
+    php83-pdo \
+    php83-pdo_mysql \
+    php83-pdo_sqlite \
+    php83-pecl-swoole \
+    php83-ssh2 \
+    php83-ftp \
     supervisor && \
     rm -rf /var/cache/apk/*
 
 # 配置 Nginx、PHP-FPM 和 supervisord
 COPY config/nginx.conf /etc/nginx/nginx.conf
-COPY config/fpm-pool.conf /etc/php82/php-fpm.d/www.conf
-COPY config/php.ini /etc/php82/conf.d/custom.ini
+COPY config/fpm-pool.conf /etc/php83/php-fpm.d/www.conf
+COPY config/php.ini /etc/php83/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 
@@ -64,16 +64,16 @@ RUN wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/
 chmod +x /usr/local/bin/composer
 
 # 安装 Composer 依赖
-RUN /usr/bin/php82 /usr/local/bin/composer install -d /usr/src/www --no-dev && \
-/usr/bin/php82 /usr/local/bin/composer clear-cache
+RUN /usr/bin/php83 /usr/local/bin/composer install -d /usr/src/www --no-dev && \
+/usr/bin/php83 /usr/local/bin/composer clear-cache
 # 创建用户并设置权限
 RUN adduser -D -s /sbin/nologin -g www www && \
     mkdir -p /var/lib/nginx /var/log/nginx && \
     chown -R www:www /usr/src/www /var/lib/nginx /var/log/nginx
 
 # 配置 crontab
-RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" | crontab -u www - && \
-    echo "*/1 * * * * cd /app/www && /usr/bin/php82 think certtask" | crontab -u www - && \
+RUN echo "*/15 * * * * cd /app/www && /usr/bin/php83 think opiptask" | crontab -u www - && \
+    echo "*/1 * * * * cd /app/www && /usr/bin/php83 think certtask" | crontab -u www - && \
     crontab -l -u www
 
 # 复制 entrypoint 脚本并设置权限
