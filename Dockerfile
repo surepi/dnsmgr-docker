@@ -9,6 +9,7 @@ WORKDIR /app/www
 RUN apk add --no-cache \
     bash \
     curl \
+    unzip \
     nginx \
     php82 \
     php82-ctype \
