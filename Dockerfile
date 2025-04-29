@@ -14,35 +14,55 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 安装PHP核心和常用扩展
+# 添加PHP官方仓库
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    php-fpm \
-    php-common \
-    php-ctype \
-    php-curl \
-    php-dom \
-    php-fileinfo \
-    php-gd \
-    php-gettext \
-    php-intl \
-    php-iconv \
-    php-mbstring \
-    php-mysqli \
-    php-opcache \
-    php-openssl \
-    php-phar \
-    php-sodium \
-    php-session \
-    php-simplexml \
-    php-tokenizer \
-    php-xml \
-    php-xmlreader \
-    php-xmlwriter \
-    php-zip \
-    php-pdo \
-    php-pdo-mysql \
-    php-pdo-sqlite \
-    php-ftp && \
+    ca-certificates \
+    apt-transport-https \
+    software-properties-common \
+    gnupg2 && \
+    curl -sSL https://packages.sury.org/php/apt.gpg | apt-key add - && \
+    echo "deb https://packages.sury.org/php/ bookworm main" > /etc/apt/sources.list.d/php.list && \
+    apt-get update && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装PHP核心
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    php8.2-fpm \
+    php8.2-common && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装基本PHP扩展
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    php8.2-ctype \
+    php8.2-curl \
+    php8.2-dom \
+    php8.2-fileinfo \
+    php8.2-mbstring \
+    php8.2-openssl \
+    php8.2-phar \
+    php8.2-tokenizer \
+    php8.2-xml && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装数据库相关PHP扩展
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    php8.2-mysqli \
+    php8.2-pdo \
+    php8.2-pdo-mysql \
+    php8.2-pdo-sqlite && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装其他PHP扩展
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    php8.2-gd \
+    php8.2-intl \
+    php8.2-sodium \
+    php8.2-zip \
+    php8.2-ftp && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
