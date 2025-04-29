@@ -5,7 +5,7 @@ FROM alpine:${ALPINE_VERSION}
 # 工作目录
 WORKDIR /app/www
 
-# 安装依赖包
+# 安装依赖包并清理缓存
 RUN apk add --no-cache \
     bash \
     curl \
@@ -41,28 +41,21 @@ RUN apk add --no-cache \
     supervisor && \
     rm -rf /var/cache/apk/*
 
-# 配置 Nginx
+# 配置 Nginx、PHP-FPM 和 supervisord
 COPY config/nginx.conf /etc/nginx/nginx.conf
-
-# 配置 PHP-FPM
-ENV PHP_INI_DIR=/etc/php82
-COPY config/fpm-pool.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
-COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
-
-# 配置 supervisord
+COPY config/fpm-pool.conf /etc/php82/php-fpm.d/www.conf
+COPY config/php.ini /etc/php82/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# 添加应用代码
+# 添加应用代码并安装 Composer 依赖
 RUN mkdir -p /usr/src && \
     wget -q https://git.814560.xyz/https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
     unzip /usr/src/www.zip -d /usr/src/ && \
     mv /usr/src/dnsmgr-main /usr/src/www && \
     rm -f /usr/src/www.zip && \
     chown -R www:www /usr/src/www && \
-    chmod -R 755 /usr/src/www
-
-# 安装 Composer 并安装依赖
-RUN wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && \
+    chmod -R 755 /usr/src/www && \
+    wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && \
     chmod +x /usr/local/bin/composer && \
     composer install -d /usr/src/www --no-dev && \
     composer clear-cache
@@ -77,7 +70,7 @@ RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" | crontab -
     echo "*/1 * * * * cd /app/www && /usr/bin/php82 think certtask" | crontab -u www - && \
     crontab -l -u www
 
-# 复制 entrypoint 脚本
+# 复制 entrypoint 脚本并设置权限
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
