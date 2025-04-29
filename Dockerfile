@@ -54,7 +54,7 @@ COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # 添加应用代码
 RUN mkdir -p /usr/src && \
-    wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
+    wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/dnsmgr-main.zip -O /usr/src/www.zip && \
     unzip /usr/src/www.zip -d /usr/src/ && \
     mv /usr/src/dnsmgr-main /usr/src/www && \
     rm -f /usr/src/www.zip && \
