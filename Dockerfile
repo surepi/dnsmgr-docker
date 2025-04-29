@@ -28,19 +28,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 安装PHP核心
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    php8.2-cli \
     php8.2-fpm \
     php8.2-common && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# 安装基本PHP扩展
+# 安装基本PHP扩展 - 第1组
 RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.2-ctype \
     php8.2-curl \
-    php8.2-dom \
+    php8.2-dom && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装基本PHP扩展 - 第2组
+RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.2-fileinfo \
     php8.2-mbstring \
-    php8.2-openssl \
+    php8.2-openssl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装基本PHP扩展 - 第3组
+RUN apt-get update && apt-get install -y --no-install-recommends \
     php8.2-phar \
     php8.2-tokenizer \
     php8.2-xml && \
