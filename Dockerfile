@@ -11,42 +11,42 @@ RUN apk add --no-cache \
     curl \
     unzip \
     nginx \
-    php83 \
-    php83-ctype \
-    php83-curl \
-    php83-dom \
-    php83-fileinfo \
-    php83-fpm \
-    php83-gd \
-    php83-gettext \
-    php83-intl \
-    php83-iconv \
-    php83-mbstring \
-    php83-mysqli \
-    php83-opcache \
-    php83-openssl \
-    php83-phar \
-    php83-sodium \
-    php83-session \
-    php83-simplexml \
-    php83-tokenizer \
-    php83-xml \
-    php83-xmlreader \
-    php83-xmlwriter \
-    php83-zip \
-    php83-pdo \
-    php83-pdo_mysql \
-    php83-pdo_sqlite \
-    php83-pecl-swoole \
-    php83-ssh2 \
-    php83-ftp \
+    php80 \
+    php80-ctype \
+    php80-curl \
+    php80-dom \
+    php80-fileinfo \
+    php80-fpm \
+    php80-gd \
+    php80-gettext \
+    php80-intl \
+    php80-iconv \
+    php80-mbstring \
+    php80-mysqli \
+    php80-opcache \
+    php80-openssl \
+    php80-phar \
+    php80-sodium \
+    php80-session \
+    php80-simplexml \
+    php80-tokenizer \
+    php80-xml \
+    php80-xmlreader \
+    php80-xmlwriter \
+    php80-zip \
+    php80-pdo \
+    php80-pdo_mysql \
+    php80-pdo_sqlite \
+    php80-pecl-swoole \
+    php80-ssh2 \
+    php80-ftp \
     supervisor && \
     rm -rf /var/cache/apk/*
 
 # 配置 Nginx、PHP-FPM 和 supervisord
 COPY config/nginx.conf /etc/nginx/nginx.conf
-COPY config/fpm-pool.conf /etc/php83/php-fpm.d/www.conf
-COPY config/php.ini /etc/php83/conf.d/custom.ini
+COPY config/fpm-pool.conf /etc/php80/php-fpm.d/www.conf
+COPY config/php.ini /etc/php80/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 
@@ -64,16 +64,16 @@ RUN wget -q https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/
 chmod +x /usr/local/bin/composer
 
 # 安装 Composer 依赖
-RUN /usr/bin/php83 /usr/local/bin/composer install -d /usr/src/www --no-dev && \
-/usr/bin/php83 /usr/local/bin/composer clear-cache
+RUN /usr/local/bin/composer install -d /usr/src/www --no-dev && \
+/usr/local/bin/composer clear-cache
 # 创建用户并设置权限
 RUN adduser -D -s /sbin/nologin -g www www && \
     mkdir -p /var/lib/nginx /var/log/nginx && \
     chown -R www:www /usr/src/www /var/lib/nginx /var/log/nginx
 
 # 配置 crontab
-RUN echo "*/15 * * * * cd /app/www && /usr/bin/php83 think opiptask" | crontab -u www - && \
-    echo "*/1 * * * * cd /app/www && /usr/bin/php83 think certtask" | crontab -u www - && \
+RUN echo "*/15 * * * * cd /app/www && /usr/bin/php80 think opiptask" | crontab -u www - && \
+    echo "*/1 * * * * cd /app/www && /usr/bin/php80 think certtask" | crontab -u www - && \
     crontab -l -u www
 
 # 复制 entrypoint 脚本并设置权限
