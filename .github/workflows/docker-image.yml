@@ -42,9 +42,9 @@ jobs:
           platforms: linux/amd64, linux/arm64  # 目标平台
           # 标签包含: commit hash, latest和日期(YYYYMMDD格式)
           tags: |
-            surepi942/dnsmgr-web:${{ github.sha }}
-            surepi942/dnsmgr-web:latest
-            surepi942/dnsmgr-web:${{ steps.date.outputs.date }}
+            surepi942/dnsmgr:${{ github.sha }}
+            surepi942/dnsmgr:latest
+            surepi942/dnsmgr:${{ steps.date.outputs.date }}
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
