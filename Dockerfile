@@ -60,6 +60,7 @@ RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var
 
 # crontab
 RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" | crontab -u www -
+RUN echo "0 * * * * cd /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O www.zip && unzip -o www.zip -d /usr/src/ && mv /usr/src/dnsmgr-main /usr/src/www && rm -f www.zip" | crontab -u www -
 
 # copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
