@@ -41,7 +41,7 @@ RUN apk add --no-cache \
 COPY config/nginx.conf /etc/nginx/nginx.conf
 
 # Configure PHP-FPM
-ENV PHP_INI_DIR /etc/php82
+ENV PHP_INI_DIR=/etc/php82
 COPY config/fpm-pool.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
 COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 
@@ -138,7 +138,7 @@ ENTRYPOINT ["sh", "/entrypoint.sh"]
 EXPOSE 80
 
 # Let supervisord start nginx & php-fpm
-CMD crond && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+CMD ["sh", "-c", "crond && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
 
 # Configure a healthcheck to validate that everything is up&running
 HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1/fpm-ping || exit 1
