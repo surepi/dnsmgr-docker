@@ -58,9 +58,77 @@ RUN composer install -d /usr/src/www --no-dev --ignore-platform-req=ext-ssh2 --i
 
 RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var/lib/nginx /var/log/nginx
 
-# crontab
+# 创建源码更新脚本
+RUN cat > /usr/local/bin/update-source.sh << 'EOF'
+#!/bin/bash
+set -e
+
+cd /usr/src
+
+# 备份当前源码
+if [ -d www ]; then
+    cp -r www www.backup.$(date +%Y%m%d%H%M%S)
+fi
+
+# 下载最新源码
+if wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O www.zip; then
+    # 解压源码
+    if unzip -o www.zip -d /usr/src/; then
+        # 移动源码到正确位置
+        rm -rf www
+        mv dnsmgr-main www
+        rm -f www.zip
+        
+        # 安装依赖
+        cd www
+        composer install --no-dev --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp
+        
+        echo "源码更新成功 $(date)"
+        
+        # 标记需要重启服务
+        touch /tmp/restart-required
+    else
+        echo "解压失败，恢复备份"
+        # 恢复备份
+        if [ -d www.backup.* ]; then
+            rm -rf www
+            mv www.backup.* www
+        fi
+    fi
+else
+    echo "下载失败，跳过更新"
+fi
+EOF
+
+RUN chmod +x /usr/local/bin/update-source.sh
+
+# 创建服务重启脚本
+RUN cat > /usr/local/bin/restart-services.sh << 'EOF'
+#!/bin/bash
+while read line; do
+    # 检查是否需要重启服务
+    if [ -f /tmp/restart-required ]; then
+        echo "检测到源码更新，重启服务..."
+        rm -f /tmp/restart-required
+        
+        # 优雅重启PHP-FPM
+        pkill -USR2 php-fpm82 2>/dev/null || true
+        
+        # 优雅重启Nginx
+        nginx -s reload 2>/dev/null || true
+        
+        echo "服务重启完成"
+    fi
+done
+EOF
+
+RUN chmod +x /usr/local/bin/restart-services.sh
+
+# crontab - 业务任务
 RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" | crontab -u www -
-RUN echo "0 * * * * cd /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O www.zip && unzip -o www.zip -d /usr/src/ && mv /usr/src/dnsmgr-main /usr/src/www && rm -f www.zip" | crontab -u www -
+
+# crontab - 源码更新（每小时检查一次）
+RUN echo "0 * * * * /usr/local/bin/update-source.sh >> /var/log/update-source.log 2>&1" | crontab -u www -
 
 # copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
