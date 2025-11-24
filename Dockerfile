@@ -1,7 +1,7 @@
 ARG ALPINE_VERSION=3.19
 FROM alpine:${ALPINE_VERSION}
 # Setup document root
-WORKDIR /app/www
+WORKDIR /usr/src/www
 
 # Install packages and remove default server definition
 RUN apk add --no-cache \
@@ -49,7 +49,11 @@ COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Add application
-RUN mkdir -p /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && unzip /usr/src/www.zip -d /usr/src/ && mv /usr/src/dnsmgr-main /usr/src/www && rm -f /usr/src/www.zip
+RUN mkdir -p /usr/src && \
+    wget --timeout=30 --tries=3 https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
+    unzip /usr/src/www.zip -d /usr/src/ && \
+    mv /usr/src/dnsmgr-main /usr/src/www && \
+    rm -f /usr/src/www.zip
 
 # Install composer
 RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
@@ -71,7 +75,7 @@ if [ -d www ]; then
 fi
 
 # 下载最新源码
-if wget -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O www.zip; then
+if wget --timeout=30 --tries=3 -q https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O www.zip; then
     # 解压源码
     if unzip -o www.zip -d /usr/src/; then
         # 移动源码到正确位置
@@ -124,11 +128,9 @@ EOF
 
 RUN chmod +x /usr/local/bin/restart-services.sh
 
-# crontab - 业务任务
-RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" | crontab -u www -
-
-# crontab - 源码更新（每小时检查一次）
-RUN echo "0 * * * * /usr/local/bin/update-source.sh >> /var/log/update-source.log 2>&1" | crontab -u www -
+# crontab - 业务任务和源码更新
+RUN (echo "*/15 * * * * cd /usr/src/www && /usr/bin/php82 think opiptask"; \
+     echo "0 * * * * /usr/local/bin/update-source.sh >> /var/log/update-source.log 2>&1") | crontab -u www -
 
 # copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
