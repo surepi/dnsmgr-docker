@@ -53,12 +53,17 @@ RUN mkdir -p /usr/src && \
     wget --timeout=30 --tries=3 https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O /usr/src/www.zip && \
     unzip /usr/src/www.zip -d /usr/src/ && \
     mv /usr/src/dnsmgr-main /usr/src/www && \
-    rm -f /usr/src/www.zip
+    rm -f /usr/src/www.zip && \
+    ls -la /usr/src/www && \
+    test -f /usr/src/www/composer.json || (echo "composer.json not found" && exit 1)
 
 # Install composer
 RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
-RUN composer install -d /usr/src/www --no-dev --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp
+# Install composer dependencies after application is copied
+RUN cd /usr/src/www && \
+    composer validate --no-check-publish && \
+    composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp --no-interaction
 
 RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var/lib/nginx /var/log/nginx
 
@@ -85,7 +90,7 @@ if wget --timeout=30 --tries=3 -q https://github.com/netcccyun/dnsmgr/archive/re
         
         # 安装依赖
         cd www
-        composer install --no-dev --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp
+        composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp || echo "Composer install failed during update"
         
         echo "源码更新成功 $(date)"
         
