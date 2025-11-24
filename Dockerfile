@@ -35,6 +35,8 @@ RUN apk add --no-cache \
   php82-pdo_mysql \
   php82-pdo_sqlite \
   php82-pecl-swoole \
+  php82-bcmath \
+  php82-json \
   supervisor
 
 # Configure nginx - http
@@ -90,7 +92,8 @@ if wget --timeout=30 --tries=3 -q https://github.com/netcccyun/dnsmgr/archive/re
         
         # 安装依赖
         cd www
-        composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp || echo "Composer install failed during update"
+        composer validate --no-check-publish && \
+        composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp --no-interaction
         
         echo "源码更新成功 $(date)"
         
