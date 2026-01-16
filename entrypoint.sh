@@ -2,8 +2,8 @@
 set -e
 
 # 如果目录里没有代码，启动时执行一次全量拉取
-if [ ! -f "/app/www/think" ]; then
-    /usr/local/bin/update_code.sh
+if [ ! -f "/usr/src/www/think" ]; then
+    /usr/local/bin/update-source.sh
 fi
 
 # 启动 crond 守护进程
