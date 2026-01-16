@@ -3,25 +3,35 @@ name: Build Multi-Arch Docker Image
 on:
   push:
     branches: [ "main" ]
+  schedule:
+    - cron: '0 */4 * * *' # 每 4 小时自动构建一次
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Docker Config
         uses: actions/checkout@v4
 
-      # 【新增】在宿主机安装 PHP 并运行 Composer
+      # 【关键步】下载 PHP 项目源码，以便运行 Composer
+      - name: Download PHP Source
+        run: |
+          wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O source.zip
+          unzip source.zip
+          # 将解压后的源码移动到当前目录（Dockerfile 所在的目录）
+          cp -r dnsmgr-main/* .
+          rm -rf dnsmgr-main source.zip
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, xml, ctype, iconv, mysql, pdo_mysql # 根据项目需求
-          
+          extensions: mbstring, xml, ctype, iconv, mysql, pdo_mysql
+
+      # 现在根目录下有 composer.json 了，可以正常运行
       - name: Install Dependencies
         run: composer install --no-dev --optimize-autoloader
 
-      # 后面是原有的 Docker Buildx 流程
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -40,4 +50,8 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: your-username/dnsmgr:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/dnsmgr:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/dnsmgr:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
