@@ -1,16 +1,13 @@
 #!/bin/bash
 set -e
 
-# 如果 /app/www 是空的（比如挂载了卷），则把源码拷贝进去
+# 如果目录里没有代码，启动时执行一次全量拉取
 if [ ! -f "/app/www/think" ]; then
-    cp -r /usr/src/www/. /app/www/
+    /usr/local/bin/update_code.sh
 fi
 
-# 设置权限
-chown -R www.www /app/www/runtime /app/www/extend 2>/dev/null || true
-
-# 启动 Crontab
+# 启动 crond 守护进程
 crond -L /var/log/cron.log
 
-# 执行命令
+# 启动 CMD (即 supervisord)
 exec "$@"
