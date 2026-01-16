@@ -1,89 +1,58 @@
-# 使用指定的 Alpine 版本
+# 使用 Alpine 3.19 作为基础镜像
 ARG ALPINE_VERSION=3.19
 FROM alpine:${ALPINE_VERSION}
 
-# 设置工作目录
 WORKDIR /app/www
 
-# 1. 安装系统依赖、Nginx、PHP 8.2 以及常用扩展
+# 1. 安装基础工具和编译 SSH2 所需的依赖
 RUN apk add --no-cache \
-    bash \
-    curl \
-    wget \
-    unzip \
-    nginx \
-    supervisor \
-    php82 \
-    php82-ctype \
-    php82-curl \
-    php82-dom \
-    php82-fileinfo \
-    php82-fpm \
-    php82-gd \
-    php82-gettext \
-    php82-intl \
-    php82-iconv \
-    php82-mbstring \
-    php82-mysqli \
-    php82-opcache \
-    php82-openssl \
-    php82-phar \
-    php82-sodium \
-    php82-session \
-    php82-simplexml \
-    php82-tokenizer \
-    php82-xml \
-    php82-xmlreader \
-    php82-xmlwriter \
-    php82-zip \
-    php82-pdo \
-    php82-pdo_mysql \
-    php82-pdo_sqlite \
-    php82-pecl-swoole
+    bash curl wget unzip nginx supervisor \
+    libssh2-dev \
+    gcc g++ make autoconf # 编译工具
 
-# 2. 配置 Nginx、PHP-FPM 和 Supervisor
-# 请确保你的 config 目录下有这些文件
+# 2. 安装 PHP 8.2 及其核心扩展
+RUN apk add --no-cache \
+    php82 php82-dev php82-pear \
+    php82-fpm php82-ctype php82-curl php82-dom php82-fileinfo \
+    php82-gd php82-gettext php82-intl php82-iconv php82-mbstring \
+    php82-mysqli php82-opcache php82-openssl php82-phar php82-sodium \
+    php82-session php82-simplexml php82-tokenizer php82-xml \
+    php82-xmlreader php82-xmlwriter php82-zip php82-pdo \
+    php82-pdo_mysql php82-pdo_sqlite php82-pecl-swoole
+
+# 3. 编译并启用 SSH2 扩展
+RUN pecl82 install ssh2-1.3.1 && \
+    echo "extension=ssh2.so" > /etc/php82/conf.d/ssh2.ini && \
+    apk del gcc g++ make autoconf # 编译完成后卸载工具以减小体积
+
+# 4. 拷贝项目配置文件
 COPY config/nginx.conf /etc/nginx/nginx.conf
 COPY config/fpm-pool.conf /etc/php82/php-fpm.d/www.conf
 COPY config/php.ini /etc/php82/conf.d/custom.ini
 COPY config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-# 3. 准备代码更新脚本
-# 我们将更新逻辑写在脚本里，方便 crontab 调用
 COPY config/update_code.sh /usr/local/bin/update_code.sh
 RUN chmod +x /usr/local/bin/update_code.sh
 
-# 4. 设置 Composer (可选：如果在构建时需要跑依赖)
-RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && \
-    chmod +x /usr/local/bin/composer
-
-# 5. 创建运行用户并配置目录权限
+# 5. 准备应用环境
 RUN adduser -D -s /sbin/nologin -g www www && \
-    mkdir -p /usr/src/www && \
     chown -R www.www /var/lib/nginx /var/log/nginx /app/www
 
 # 6. 配置计划任务 (Crontab)
-# - 每 15 分钟运行一次 opiptask
-# - 每 1 分钟运行一次 certtask
-# - 每 4 小时通过 update_code.sh 更新一次源码
 RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" > /var/spool/cron/crontabs/www && \
     echo "* * * * * cd /app/www && /usr/bin/php82 think certtask" >> /var/spool/cron/crontabs/www && \
     echo "0 */4 * * * /usr/local/bin/update_code.sh >> /var/log/cron.log 2>&1" >> /var/spool/cron/crontabs/www && \
     chown www:www /var/spool/cron/crontabs/www && \
     chmod 600 /var/spool/cron/crontabs/www
 
-# 7. 拷贝并配置入口脚本
+# 7. 拷贝预构建的代码 (由 GitHub Actions 准备好的带 vendor 的代码)
+COPY . /usr/src/www
+
+# 8. 入口设置
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# 暴露 80 端口
 EXPOSE 80
-
-# 容器入口
 ENTRYPOINT ["/entrypoint.sh"]
-
-# 启动 Supervisord (它会拉起 Nginx 和 PHP-FPM)
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
-# 健康检查
 HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1/fpm-ping || exit 1
