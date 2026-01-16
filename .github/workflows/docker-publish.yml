@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   schedule:
-    - cron: '0 */4 * * *' # 每 4 小时自动构建一次
+    - cron: '0 */4 * * *'
 
 jobs:
   build:
@@ -13,24 +13,23 @@ jobs:
       - name: Checkout Docker Config
         uses: actions/checkout@v4
 
-      # 【关键步】下载 PHP 项目源码，以便运行 Composer
       - name: Download PHP Source
         run: |
-          wget https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -O source.zip
-          unzip source.zip
-          # 将解压后的源码移动到当前目录（Dockerfile 所在的目录）
-          cp -r dnsmgr-main/* .
-          rm -rf dnsmgr-main source.zip
+          curl -L https://github.com/netcccyun/dnsmgr/archive/refs/heads/main.zip -o source.zip
+          unzip -q source.zip
+          EXTRACTED_DIR=$(ls -d */ | grep "dnsmgr" | head -n 1)
+          cp -rn "$EXTRACTED_DIR"* .
+          rm -rf "$EXTRACTED_DIR" source.zip
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: mbstring, xml, ctype, iconv, mysql, pdo_mysql
-
-      # 现在根目录下有 composer.json 了，可以正常运行
+          
       - name: Install Dependencies
-        run: composer install --no-dev --optimize-autoloader
+        # 核心改动：忽略 ssh2 的平台检查，让 vendor 顺利生成
+        run: composer install --no-dev --optimize-autoloader --ignore-platform-req=ext-ssh2
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
