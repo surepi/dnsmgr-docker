@@ -11,11 +11,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 第一步：设置 QEMU，这是跨架构构建的基础
+      # 【新增】在宿主机安装 PHP 并运行 Composer
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, mysql, pdo_mysql # 根据项目需求
+          
+      - name: Install Dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      # 后面是原有的 Docker Buildx 流程
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # 第二步：设置 Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -29,12 +38,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          # 关键点：指定需要支持的平台
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            your-username/dnsmgr:latest
-            your-username/dnsmgr:${{ github.sha }}
-          # 开启缓存优化构建速度
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: your-username/dnsmgr:latest
