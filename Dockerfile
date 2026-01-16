@@ -134,11 +134,22 @@ EOF
 RUN chmod +x /usr/local/bin/update-source.sh /usr/local/bin/check-restart.sh
 
 # 7. 配置 Crontab
-# 注意：将业务任务和检查更新任务分开
-RUN echo "*/15 * * * * cd /usr/src/www && /usr/bin/php think opiptask" > /var/spool/cron/crontabs/www \
-    && echo "0 * * * * /usr/local/bin/update-source.sh >> /var/log/update.log 2>&1" >> /var/spool/cron/crontabs/www \
-    && echo "* * * * * /usr/local/bin/check-restart.sh >> /var/log/restart.log 2>&1" >> /var/spool/cron/crontabs/root
-
+# 将所有任务合并到一个 RUN 指令中，减少镜像层数
+RUN set -eux; \
+    # 1. 配置 www 用户的任务 (业务逻辑)
+    { \
+        echo "*/15 * * * * cd /usr/src/www && /usr/bin/php82 think opiptask"; \
+        echo "* * * * * cd /usr/src/www && /usr/bin/php82 think certtask"; \
+        echo "0 * * * * /usr/local/bin/update-source.sh >> /var/log/update.log 2>&1"; \
+    } > /var/spool/cron/crontabs/www; \
+    # 2. 配置 root 用户的任务 (系统维护)
+    { \
+        echo "* * * * * /usr/local/bin/check-restart.sh >> /var/log/restart.log 2>&1"; \
+    } > /var/spool/cron/crontabs/root; \
+    # 3. 确保权限正确
+    chmod 0600 /var/spool/cron/crontabs/www /var/spool/cron/crontabs/root; \
+    chown www:www /var/spool/cron/crontabs/www; \
+    chown root:root /var/spool/cron/crontabs/root
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
