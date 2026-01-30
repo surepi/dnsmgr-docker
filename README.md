@@ -50,6 +50,7 @@ services:
       - MYSQL_ROOT_PASSWORD=123456
       - TZ=Asia/Shanghai
       - MYSQL_AUTHENTICATION_PLUGIN=mysql_native_password
+      - MYSQL_DATABASE=dnsmgr
     image: mysql:8.0
     networks:
       - dnsmgr-network
@@ -120,6 +121,7 @@ default-storage-engine=INNODB
 - 端口：`3306`
 - 用户名：`root`
 - 密码：`123456`（根据 docker-compose.yml 中的 MYSQL_ROOT_PASSWORD 修改）
+- 数据库：`dnsmgr`（自动创建）
 
 **phpMyAdmin 登录：**
 - 访问：`http://localhost:8082`
@@ -181,7 +183,7 @@ docker-compose up -d
 ## 定时任务
 
 容器内置以下定时任务：
-- 每 15 分钟执行一次 IP 解析任务
+- 每 1 分钟执行一次证书任务
 
 ## 注意事项
 
