@@ -64,6 +64,8 @@ RUN echo "*/15 * * * * cd /app/www && /usr/bin/php82 think opiptask" | crontab -
 
 # copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
+RUN dos2unix /entrypoint.sh || sed -i 's/\r$//' /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["sh", "/entrypoint.sh"]
 
 # Expose the port nginx is reachable on
