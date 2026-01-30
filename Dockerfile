@@ -13,6 +13,7 @@ RUN apk add --no-cache \
   php82-curl \
   php82-dom \
   php82-fileinfo \
+  php82-ftp \
   php82-fpm \
   php82-gd \
   php82-gettext \
@@ -41,7 +42,7 @@ RUN apk add --no-cache \
 COPY config/nginx.conf /etc/nginx/nginx.conf
 
 # Configure PHP-FPM
-ENV PHP_INI_DIR /etc/php82
+ENV PHP_INI_DIR=/etc/php82
 COPY config/fpm-pool.conf ${PHP_INI_DIR}/php-fpm.d/www.conf
 COPY config/php.ini ${PHP_INI_DIR}/conf.d/custom.ini
 
@@ -54,7 +55,7 @@ RUN mkdir -p /usr/src && wget https://github.com/netcccyun/dnsmgr/archive/refs/h
 # Install composer
 RUN wget https://mirrors.aliyun.com/composer/composer.phar -O /usr/local/bin/composer && chmod +x /usr/local/bin/composer
 
-RUN composer install -d /usr/src/www --no-dev
+RUN composer install -d /usr/src/www --no-dev --ignore-platform-req=ext-ssh2 --ignore-platform-req=ext-ftp
 
 RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var/lib/nginx /var/log/nginx
 
@@ -69,7 +70,7 @@ ENTRYPOINT ["sh", "/entrypoint.sh"]
 EXPOSE 80
 
 # Let supervisord start nginx & php-fpm
-CMD crond && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+CMD ["sh", "-c", "crond && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"]
 
 # Configure a healthcheck to validate that everything is up&running
 HEALTHCHECK --timeout=10s CMD curl --silent --fail http://127.0.0.1/fpm-ping || exit 1
