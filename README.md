@@ -49,7 +49,6 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=123456
       - TZ=Asia/Shanghai
-      - MYSQL_AUTHENTICATION_PLUGIN=mysql_native_password
       - MYSQL_DATABASE=dnsmgr
     image: mysql:8.0
     networks:
