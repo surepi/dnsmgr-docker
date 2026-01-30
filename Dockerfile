@@ -61,6 +61,7 @@ RUN adduser -D -s /sbin/nologin -g www www && chown -R www.www /usr/src/www /var
 
 # crontab
 RUN echo "* * * * * cd /app/www && /usr/bin/php82 think certtask" | crontab -u www -
+RUN echo "* * * * * cd /app/www && /usr/bin/php82 think dmtask" | crontab -u www -
 
 # copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
